@@ -3,9 +3,10 @@ title: "Assignment 2"
 author: "Chloe Chen"
 date: "2023-09-21"
 output:
+  pdf_document: default
+  word_document: default
   html_document:
     df_print: paged
-  word_document: default
 ---
 
 ```{r setup, include=FALSE, tidy=TRUE}
@@ -30,7 +31,7 @@ Whenever possible, use *piping and dplyr*. Avoid hard-coding any numbers within 
 
 ## Pulling from APIs
 
-Our first data source is the Google Trends API. Suppose we are interested in the search trends for crime and loans in Illinois in the year 2020. We could find this using the following code:
+### Our first data source is the Google Trends API. Suppose we are interested in the search trends for crime and loans in Illinois in the year 2020. We could find this using the following code:
 ```{r}
 res <- gtrends(c("crime", "loans"), 
                geo = "US-IL", 
@@ -39,9 +40,9 @@ res <- gtrends(c("crime", "loans"),
 plot(res)
 ```
 
-Answer the following questions for the keywords *"crime"* and *"loans"*.
+## Answer the following questions for the keywords *"crime"* and *"loans"*.
 
-* Find the mean, median and variance of the search hits for the keywords.
+### Find the mean, median and variance of the search hits for the keywords.
 ```{r}
 head(res$interest_over_time)
 res_time <- as_tibble(res$interest_over_time)
@@ -54,9 +55,10 @@ res_time%>%
             variance = var(hits, na.rm = T))
 
 ```
+- For the keyword "crime",the mean is $55.25$, the median is $54.50$, and the variance is $76.15$.
+- For the keyword "loans",the mean is $66.69$, the median is $66.00$, and the variance is $98.22$.
 
-
-* Which cities (locations) have the highest search frequency for *loans*? Note that there might be multiple rows for each city if there were hits for both "crime" and "loans" in that city. It might be easier to answer this question if we had the search hits info for both search terms in two separate variables. That is, each row would represent a unique city.
+### Which cities (locations) have the highest search frequency for *loans*? Note that there might be multiple rows for each city if there were hits for both "crime" and "loans" in that city. It might be easier to answer this question if we had the search hits info for both search terms in two separate variables. That is, each row would represent a unique city.
 ```{r}
 res_city <- as_tibble(res$interest_by_city)
 head(res_city)
@@ -69,10 +71,10 @@ city_loan
 max_loan_city <- city_loan[which.max(city_loan$hits), ]
 max_loan_city
 ```
-- *Union* has the highest search frequency for *loans*
+- *White City* has the highest search frequency for *loans*
 
 
-* Is there a relationship between the search intensities between the two keywords we used?
+### Is there a relationship between the search intensities between the two keywords we used?
 ```{r}
 res_time_filtered <- res_time %>%
   filter(keyword %in% c("crime", "loans"))
@@ -89,7 +91,7 @@ print(cor_test)
 -   The correlation coefficient of $-0.05918096$ suggests a very weak negative linear relationship between the search intensities for the keywords "crime" and "loans" in Illinois in 2020. This correlation is close to zero, also by doing the hypothesis test,  the p-value is greater than 0.05, this means we fail to reject the null hypothesis and conclude that there is no significant correlation, which means that there is essentially no meaningful linear relationship between these two variables.
 
 
-Repeat the above for keywords related to covid. Make sure you use multiple keywords like we did above. Try several different combinations and think carefully about words that might make sense within this context.
+### Repeat the above for keywords related to covid. Make sure you use multiple keywords like we did above. Try several different combinations and think carefully about words that might make sense within this context.
 ```{r}
 res2 <- gtrends(c("covid", "vaccine"), 
                geo = "US-IL", 
@@ -101,7 +103,6 @@ plot(res2)
 
 ```{r}
 head(res2$interest_over_time)
-res2$interest_over_time
 res2_time <- as_tibble(res2$interest_over_time)
 head(res2_time)
 
@@ -111,6 +112,8 @@ res2_time%>%
             median = median(hits, na.rm = T),
             variance = var(hits, na.rm = T))
 ```
+- For the keyword "covid",the mean is $31.34$, the median is $30$, and the variance is $329.04$.
+- For the keyword "vaccine",the mean is $7.72$, the median is $3$, and the variance is $81.18$.
 
 ```{r}
 # The location with the most hits for the keywords.
@@ -155,7 +158,7 @@ Now lets add another data set. The censusapi package provides a nice R interface
 
 <https://api.census.gov/data/key_signup.html>
 
-Once you have an access key, store this key in the cs_key object. We will use this object in all following API queries.
+### Once you have an access key, store this key in the cs_key object. We will use this object in all following API queries.
 
 ```{r}
 #| eval: false
@@ -163,7 +166,7 @@ cs_key <- "3ce4bbc5d8a79c7bc1800141e8002f293c05d73d"
 
 ```
 
-In the following, we request basic socio-demographic information (population, median age, median household income, income per capita) for cities and villages in the state of Illinois.
+### In the following, we request basic socio-demographic information (population, median age, median household income, income per capita) for cities and villages in the state of Illinois.
 
 ```{r}
 acs_il <- getCensus(name = "acs/acs5",
@@ -179,14 +182,14 @@ acs_il <- getCensus(name = "acs/acs5",
 head(acs_il)
 ```
 
-Convert values that represent missings to NAs.
+### Convert values that represent missings to NAs.
 
 ```{bash}
 #| eval: false
 acs_il[acs_il == -666666666] <- NA
 ```
 
-Now, it might be useful to rename the socio-demographic variables (B01001_001E etc.) in our data set and assign more meaningful names.
+### Now, it might be useful to rename the socio-demographic variables (B01001_001E etc.) in our data set and assign more meaningful names.
 
 ```{r}
 #| eval: false
@@ -199,8 +202,13 @@ acs_il <-
 head(acs_il)
 ```
 
-It seems like we could try to use this location information listed above to merge this data set with the Google Trends data. However, we first have to clean NAME so that it has the same structure as location in the search interest by city data. Add a new variable location to the ACS data that only includes city names.
+### It seems like we could try to use this location information listed above to merge this data set with the Google Trends data. However, we first have to clean NAME so that it has the same structure as location in the search interest by city data. Add a new variable location to the ACS data that only includes city names.
 ```{r}
+res_city_filtered <- res_city %>%
+  filter(keyword %in% c("crime", "loans"))
+res_city_wider <- pivot_wider(res_city_filtered, names_from = keyword, values_from = hits)
+head(res_city_wider)
+
 library(tidyverse)
 library(magrittr)
 acs_il2<-acs_il %<>%
@@ -210,67 +218,113 @@ head(acs_il2)
 ```{r}
 library(stringr)
 # Remove the last word from the location column
-acs_il3 <- acs_il2 %>%
+acs_il3<-acs_il2 %>%
   mutate(location = str_remove(location, "\\s[[:alnum:]]+$"))
 # Print the head of the modified ACS data frame
 head(acs_il3)
 
 ```
 
-Answer the following questions with the "crime" and "loans" Google trends data and the ACS data.
-* First, check how many cities don't appear in both data sets, i.e. cannot be matched. Then, create a new data set by joining the Google Trends and the ACS data. Keep only cities that appear in both data sets.
+### Answer the following questions with the "crime" and "loans" Google trends data and the ACS data.
+### First, check how many cities don't appear in both data sets, i.e. cannot be matched. Then, create a new data set by joining the Google Trends and the ACS data. Keep only cities that appear in both data sets.
 ```{r}
 # Check how many unique cities are in each data set
-unique_gtrends <- unique(res_city$location)
+unique_g <- unique(res_city_wider$location)
 unique_acs <- unique(acs_il3$location)
 
 # Find cities that are in one data set but not the other
-gtrends_only <- setdiff(unique_gtrends, unique_acs)
-acs_only <- setdiff(unique_acs, unique_gtrends)
+gtrends_only <- setdiff(unique_g, unique_acs)
+acs_only <- setdiff(unique_acs, unique_g)
 
 # Print the number of cities in each category
 cat("Cities in Google Trends data but not in ACS data:", length(gtrends_only), "\n")
 cat("Cities in ACS data but not in Google Trends data:", length(acs_only), "\n")
 
 # Create a new data set by joining the two data frames for matching cities
-merged_data <- inner_join(res_city, acs_il, by = "location" )
+merged_data <- inner_join(res_city_wider, acs_il3, by = "location" )
 
 # Print the head of the merged data set
 head(merged_data)
 
+merged_data <-
+  merged_data %>%
+  rename(pop = B01001_001E, 
+         age = B06002_001E, 
+         hh_income = B19013_001E, 
+         income = B19301_001E)
+merged_data[merged_data == -666666666] <- NA
 ```
 
-* Compute the mean of the search popularity for both keywords for cities that have an above average median household income and for those that have an below average median household income. When building your pipe, start with creating the grouping variable and then proceed with the remaining tasks. What conclusions might you draw from this?
+### Compute the mean of the search popularity for both keywords for cities that have an above average median household income and for those that have an below average median household income. When building your pipe, start with creating the grouping variable and then proceed with the remaining tasks. What conclusions might you draw from this?
 ```{r}
 library(dplyr)
-
+summary(merged_data$hh_income)
 # Step 1: Calculate the average median household income
 average_hhincome <- mean(merged_data$hh_income, na.rm = TRUE)
-
+average_hhincome
 # Step 2: Create a grouping variable for income categories
-merged_data %>%
-  mutate(income_group = ifelse(hh_income > average_hhincome, "above_average", "below_average"))
-
+merged_data$income_group <- ifelse(merged_data$hh_income > average_hhincome, "Above Average", "Below Average")
 # Step 3: Group the data by income category
-grouped_data <- merged_data %>%
-  group_by(income_group)
-
-# Step 4: Calculate the mean search popularity for "crime" and "loan" within each income group
-#mean_popularity <- grouped_data %>%
- # summarise(mean_crime_popularity = mean(hits[keyword == "crime"], na.rm = TRUE),
-  #          mean_loan_popularity = mean(hits[keyword == "loan"], na.rm = TRUE))
-
-# Print the mean popularity for "crime" and "loan" in each income group
-#print(mean_popularity)
-
+group_mean <- merged_data %>%
+  group_by(income_group)%>%
+  summarise(mean_crime_popularity = mean(crime, na.rm = TRUE),
+            mean_loan_popularity = mean(loans, na.rm = TRUE))
+print(group_mean)
 
 ```
+- **Conclusion**: the hits of both "crime" and "loans" are higher in cities that have an below average median household income, this result might indicate people living in less wealthy communities may care more about security issues physically and financially.
 
-Repeat the above steps using the covid data and the ACS data.
+### Repeat the above steps using the covid data and the ACS data.
 ```{r}
-
-
-
+head(res2_city)
+#res2_city_filtered <- res2_city %>%
+#  filter(keyword %in% c("covid", "vaccine"))
+res2_city_wider <- pivot_wider(res2_city, names_from = keyword, values_from = hits, values_fn = list(hits = sum))
+head(res2_city_wider)
 
 ```
 
+```{r}
+# Check how many unique cities are in each data set
+unique_g2 <- unique(res2_city_wider$location)
+
+# Find cities that are in one data set but not the other
+gtrends2_only <- setdiff(unique_g2, unique_acs)
+acs_only <- setdiff(unique_acs, unique_g2)
+
+# Print the number of cities in each category
+cat("Cities in Google Trends data but not in ACS data:", length(gtrends2_only), "\n")
+cat("Cities in ACS data but not in Google Trends data:", length(acs_only), "\n")
+
+# Create a new data set by joining the two data frames for matching cities
+merged_data2 <- inner_join(res2_city_wider, acs_il3, by = "location" )
+
+# Print the head of the merged data set
+head(merged_data2)
+
+merged_data2 <-
+  merged_data2 %>%
+  rename(pop = B01001_001E, 
+         age = B06002_001E, 
+         hh_income = B19013_001E, 
+         income = B19301_001E)
+merged_data2[merged_data2 == -666666666] <- NA
+
+```
+
+```{r}
+library(dplyr)
+summary(merged_data2$hh_income)
+# Step 1: Calculate the average median household income
+average_hhincome2 <- mean(merged_data2$hh_income, na.rm = TRUE)
+average_hhincome2
+# Step 2: Create a grouping variable for income categories
+merged_data2$income_group <- ifelse(merged_data2$hh_income > average_hhincome2, "Above Average", "Below Average")
+# Step 3: Group the data by income category
+group_mean2 <- merged_data2 %>%
+  group_by(income_group)%>%
+  summarise(mean_covid_popularity2 = mean(covid, na.rm = TRUE),
+            mean_vaccine_popularity2 = mean(vaccine, na.rm = TRUE))
+print(group_mean2)
+```
+- **Conclusion**: the hits of both "covid" and "vaccine" are higher in cities that have an above average median household income, this result might indicate people living in wealthier communities may care more about covid and vaccine issues.
